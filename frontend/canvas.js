@@ -1,5 +1,4 @@
-// Polling-based Whiteboard client
-const ROOM_ID = "room_3533"; // replace after gen_config
+const ROOM_ID = "room_3533";
 const API = "http://localhost:8000";
 
 const canvas = document.getElementById('board');
@@ -30,13 +29,17 @@ document.getElementById("apply-filter")
 
 async function applyFilter() {
   const { width, height } = canvas;
-  // Отримуємо пікселі з Canvas
+  ctx.save();
+  ctx.globalCompositeOperation = "destination-over";
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
   const imgData = ctx.getImageData(0, 0, width, height);
-  const dataArray = Array.from(imgData.data);  // Перетворюємо у звичайний масив
+  const dataArray = Array.from(imgData.data);
 
-  const filterName = select.value;  // Обраний у селекті фільтр
+  const filterName = select.value;
   
-  console.log("Sending data:", {  // Додаємо логування
+  console.log("Sending data:", {
     width,
     height,
     filterName,
@@ -44,7 +47,6 @@ async function applyFilter() {
   });
 
   try {
-    // Відправляємо POST-запит на бекенд з даними зображення
     const res = await fetch(`http://localhost:8000/filter/${ROOM_ID}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -60,10 +62,9 @@ async function applyFilter() {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     
-    const json = await res.json();  // Чекаємо відповідь
-    console.log("Received data length:", json.image_data.length);  // Додаємо логування
+    const json = await res.json();
+    console.log("Received data length:", json.image_data.length);
 
-    // Отримуємо перетворені пікселі та малюємо назад на Canvas
     const newData = new Uint8ClampedArray(json.image_data);
     ctx.putImageData(new ImageData(newData, width, height), 0, 0);
   } catch (error) {
@@ -91,9 +92,8 @@ async function poll(){
   const res = await fetch(`${API}/draw/${ROOM_ID}`);
   const cmds = await res.json();
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.beginPath(); // Додайте цей рядок
+  ctx.beginPath();
   cmds.forEach(draw);
 }
 
-// initial data
 poll();

@@ -1,19 +1,19 @@
 from fastapi import FastAPI, HTTPException
 from config import ROOM_ID, FILTERS
 from fastapi.middleware.cors import CORSMiddleware
-from cpp_module.filter_module import  apply_filter_cpp
-
-_store = []
+from filter_module import apply_filter_cpp
 
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://http://127.0.0.1:8001"],
+    allow_origins=["http://127.0.0.1:8001"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
+_store = []
 @app.get("/")
 def root():
     return {"message": "Welcome to the drawing API"}
@@ -35,6 +35,10 @@ def get_draw(room_id: str):
 def filter_image(room_id: str, payload: dict):
     if room_id != ROOM_ID:
         raise HTTPException(status_code=404, detail="Room not found")
-    data = payload.get("image_data")
-    # echo stub
-    return {"image_data": data}
+    data = payload["image_data"]
+    width = payload["width"]
+    height = payload["height"]
+    filter_name = payload["filter_name"]
+
+    filtered = apply_filter_cpp(data, width, height, filter_name)
+    return {"image_data": filtered}

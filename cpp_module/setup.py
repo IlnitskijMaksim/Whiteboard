@@ -3,16 +3,16 @@ import pybind11
 
 ext_modules = [
     Extension(
-        "filter_module",
+        "filter",
         ["filter.cpp"],
         include_dirs=[pybind11.get_include()],
-        language='c++'
-
+        language="c++"
     ),
 ]
 
 setup(
-    name="filter_module",
+    name="filter",
+    version="0.1",
+    author="Your Name",
     ext_modules=ext_modules,
-    python_requires=">=3.6",
 )
