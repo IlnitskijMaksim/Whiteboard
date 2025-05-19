@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pytest
+requests
+httpx
+pybind11>=2.6.0
+
