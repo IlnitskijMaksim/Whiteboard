@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from config import ROOM_ID, FILTERS
 from fastapi.middleware.cors import CORSMiddleware
-from filter_module import apply_filter_cpp
+from filter import apply_filter_cpp
 
 app = FastAPI()
 
