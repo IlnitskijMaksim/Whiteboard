@@ -1,11 +1,75 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>Polling Whiteboard</title></head>
+<head>
+    <meta charset="UTF-8">
+    <title>Polling Whiteboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        #board {
+            border: 2px solid #333;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button, select {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        select {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        button:active, select:focus {
+            outline: 2px solid #0056b3;
+        }
+    </style>
+</head>
 <body>
-<canvas id="board" width="800" height="600" style="border:1px solid #000;"></canvas>
-<button id="refresh">Refresh</button>
-<select id="filter-select"></select>
-<button id="apply-filter">Apply Filter</button>
-<script src="canvas.js"></script>
+    <canvas id="board" width="800" height="600"></canvas>
+    <div class="controls">
+        <button id="refresh">Refresh</button>
+        <button id="clear-draw">Clear Drawing</button>
+        <select id="filter-select">
+        </select>
+        <button id="apply-filter">Apply Filter</button>
+        <input type="color" id="color-picker" value="#000000"/>
+        <label for="brush-size">Brush Size:</label>
+        <input type="range" id="brush-size" min="1" max="50" value="5"/>
+    </div>
+    <script src="canvas.js"></script>
 </body>
 </html>
