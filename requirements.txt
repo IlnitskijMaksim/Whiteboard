@@ -3,5 +3,5 @@ uvicorn
 pytest
 requests
 httpx
-pybind11>=2.6.0
+pybind11
 -e ./cpp_module

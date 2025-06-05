@@ -45,11 +45,8 @@ def filter_image(room_id: str, payload: dict):
 
 @app.delete("/draw/{room_id}")
 def clear_draw(room_id: str):
-    """
-    Видалити всі команди для заданої кімнати.
-    """
     global _store
     if room_id != ROOM_ID:
         raise HTTPException(status_code=404, detail="Room not found")
-    _store = []  # Очищаємо список команд
+    _store = []
     return {"status": "ok", "message": f"All commands for room {room_id} have been cleared"}
