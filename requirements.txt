@@ -4,3 +4,4 @@ pytest
 requests
 httpx
 pybind11>=2.6.0
+-e ./cpp_module
