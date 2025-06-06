@@ -3,19 +3,22 @@ const API = "http://localhost:8000";
 
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
+
 let tool = "brush";
 let drawing = false;
 let color = "#000000";
 let brushSize = 5;
+let textSize = 16;
 let startX = 0;
 let startY = 0;
 let beforeFilterImage = null;
 const undoStack = [];
 const redoStack = [];
 
+let snapshotBeforeShape = null;
+
 const FILTERS = ["blur", "invert"];
 const filterSelect = document.getElementById("filter-select");
-
 FILTERS.forEach(filter => {
     const option = document.createElement("option");
     option.value = filter;
@@ -37,6 +40,13 @@ const brushSizeInput = document.getElementById("brush-size");
 brushSizeInput.addEventListener('input', (e) => {
     brushSize = e.target.value;
 });
+
+const textSizeInput = document.getElementById("text-size");
+if (textSizeInput) {
+    textSizeInput.addEventListener("input", (e) => {
+        textSize = e.target.value;
+    });
+}
 
 function saveState() {
     undoStack.push(canvas.toDataURL());
@@ -75,7 +85,6 @@ function redo() {
 
 document.getElementById("undo").addEventListener("click", undo);
 document.getElementById("redo").addEventListener("click", redo);
-
 window.addEventListener("keydown", (e) => {
     if (e.ctrlKey && e.key.toLowerCase() === "z" && !e.shiftKey) {
         e.preventDefault();
@@ -100,72 +109,19 @@ function restoreBeforeFilterImage() {
 
 document.getElementById("refresh").addEventListener("click", restoreBeforeFilterImage);
 
-canvas.addEventListener('mousedown', (e) => {
-    saveState();
-    drawing = true;
-    startX = e.offsetX;
-    startY = e.offsetY;
-});
-
-canvas.addEventListener('mouseup', () => {
-    drawing = false;
-    ctx.beginPath();
-});
-
-canvas.addEventListener('mousemove', (e) => {
-    if (!drawing) return;
-
-    const endX = e.offsetX;
-    const endY = e.offsetY;
-
-    if (tool === "brush") {
-        ctx.lineWidth = brushSize;
-        ctx.lineCap = "round";
-        ctx.strokeStyle = color;
-
-        ctx.lineTo(endX, endY);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(endX, endY);
-    } else if (tool === "eraser") {
-        ctx.lineWidth = brushSize;
-        ctx.strokeStyle = "#ffffff";
-
-        ctx.lineTo(endX, endY);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(endX, endY);
-    }
-});
-
-function clearCanvas() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
-document.getElementById("clear-draw").addEventListener("click", () => {
-    const confirmClear = confirm("Очистити малюнок?");
-    if (confirmClear) {
-        clearCanvas();
-        saveState();
-    }
-});
-
 async function applyFilter() {
     const { width, height } = canvas;
 
     ctx.save();
-
     ctx.globalCompositeOperation = "destination-over";
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
+    ctx.restore();
 
     const imgData = ctx.getImageData(0, 0, width, height);
     const dataArray = Array.from(imgData.data);
 
-    ctx.restore();
-
     const filterName = filterSelect.value;
-
     try {
         const res = await fetch(`${API}/filter/${ROOM_ID}`, {
             method: "POST",
@@ -177,14 +133,11 @@ async function applyFilter() {
                 height,
             }),
         });
-
         if (!res.ok) {
             throw new Error(`Error applying filter: ${res.status}`);
         }
-
         const json = await res.json();
         const newData = new Uint8ClampedArray(json.image_data);
-
         ctx.putImageData(new ImageData(newData, width, height), 0, 0);
     } catch (error) {
         console.error("Error applying filter:", error);
@@ -196,13 +149,16 @@ document.getElementById("apply-filter").addEventListener("click", () => {
     applyFilter();
 });
 
-function initializeCanvas() {
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    saveState();
+function clearCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
-
-initializeCanvas();
+document.getElementById("clear-draw").addEventListener("click", () => {
+    const confirmClear = confirm("Очистити малюнок?");
+    if (confirmClear) {
+        clearCanvas();
+        saveState();
+    }
+});
 
 document.getElementById("save-image").addEventListener("click", () => {
     const link = document.createElement("a");
@@ -211,75 +167,13 @@ document.getElementById("save-image").addEventListener("click", () => {
     link.click();
 });
 
-let snapshotBeforeShape = null;
-
-canvas.addEventListener("mousedown", (e) => {
+function initializeCanvas() {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     saveState();
-    drawing = true;
-    startX = e.offsetX;
-    startY = e.offsetY;
+}
 
-    if (tool !== "brush" && tool !== "eraser") {
-        snapshotBeforeShape = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    } else {
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-    }
-});
-
-canvas.addEventListener("mousemove", (e) => {
-    if (!drawing) return;
-
-    const currX = e.offsetX;
-    const currY = e.offsetY;
-
-    ctx.lineWidth = brushSize;
-    ctx.strokeStyle = (tool === "eraser") ? "#ffffff" : color;
-    ctx.lineCap = "round";
-
-    switch (tool) {
-        case "brush":
-        case "eraser":
-            ctx.lineTo(currX, currY);
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(currX, currY);
-            break;
-
-        case "line":
-        case "rectangle":
-        case "circle":
-            ctx.putImageData(snapshotBeforeShape, 0, 0);
-
-            if (tool === "line") {
-                drawLine(startX, startY, currX, currY);
-            } else if (tool === "rectangle") {
-                drawRectangle(startX, startY, currX, currY);
-            } else if (tool === "circle") {
-                drawCircle(startX, startY, currX, currY);
-            }
-            break;
-    }
-});
-
-canvas.addEventListener("mouseup", (e) => {
-    if (!drawing) return;
-    drawing = false;
-
-    const endX = e.offsetX;
-    const endY = e.offsetY;
-
-    if (tool === "line") {
-        drawLine(startX, startY, endX, endY);
-    } else if (tool === "rectangle") {
-        drawRectangle(startX, startY, endX, endY);
-    } else if (tool === "circle") {
-        drawCircle(startX, startY, endX, endY);
-    }
-
-    ctx.beginPath();
-    snapshotBeforeShape = null;
-});
+initializeCanvas();
 
 function drawLine(x1, y1, x2, y2) {
     ctx.beginPath();
@@ -300,3 +194,89 @@ function drawCircle(x1, y1, x2, y2) {
     ctx.arc(x1, y1, radius, 0, Math.PI * 2);
     ctx.stroke();
 }
+
+canvas.addEventListener("mousedown", (e) => {
+    saveState();
+    drawing = true;
+
+    startX = e.offsetX;
+    startY = e.offsetY;
+
+    snapshotBeforeShape = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    if (tool === "brush" || tool === "eraser") {
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+    }
+});
+
+canvas.addEventListener("mousemove", (e) => {
+    if (!drawing) return;
+
+    const currX = e.offsetX;
+    const currY = e.offsetY;
+
+    if (tool === "brush" || tool === "eraser") {
+        ctx.lineWidth = brushSize;
+        ctx.lineCap = "round";
+        ctx.strokeStyle = (tool === "eraser") ? "#ffffff" : color;
+
+        ctx.lineTo(currX, currY);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(currX, currY);
+    }
+    else if (tool === "line" || tool === "rectangle" || tool === "circle" || tool === "text") {
+        ctx.putImageData(snapshotBeforeShape, 0, 0);
+
+        if (tool === "text") {
+            ctx.strokeStyle = "#444";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(startX, startY, currX - startX, currY - startY);
+        }
+        else if (tool === "line") {
+            drawLine(startX, startY, currX, currY);
+        }
+        else if (tool === "rectangle") {
+            drawRectangle(startX, startY, currX, currY);
+        }
+        else if (tool === "circle") {
+            drawCircle(startX, startY, currX, currY);
+        }
+    }
+});
+
+canvas.addEventListener("mouseup", (e) => {
+    if (!drawing) return;
+    drawing = false;
+
+    const endX = e.offsetX;
+    const endY = e.offsetY;
+
+    if (tool === "line") {
+        drawLine(startX, startY, endX, endY);
+    }
+    else if (tool === "rectangle") {
+        drawRectangle(startX, startY, endX, endY);
+    }
+    else if (tool === "circle") {
+        drawCircle(startX, startY, endX, endY);
+    }
+    else if (tool === "text") {
+        ctx.putImageData(snapshotBeforeShape, 0, 0);
+
+        const userText = prompt("Введіть текст:");
+        if (userText && userText.trim() !== "") {
+            const rectW = endX - startX;
+            const rectH = endY - startY;
+
+            ctx.font = `${textSize}px Arial`;
+            ctx.fillStyle = color;
+
+            ctx.fillText(userText, startX, startY + parseInt(textSize, 10));
+        }
+    }
+
+    ctx.beginPath();
+    snapshotBeforeShape = null;
+});

@@ -56,13 +56,6 @@
             height: 24px;
         }
 
-        #board-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-        }
-
         #board {
             border: 2px solid #333;
             background-color: #fff;
@@ -107,7 +100,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Панель інструментів -->
         <div class="toolbar">
             <button id="undo" title="Undo">
                 <img src="img/undo.png" alt="Undo">
@@ -116,7 +108,6 @@
                 <img src="img/redo.png" alt="Redo">
             </button>
         </div>
-        <!-- Canvas -->
         <canvas id="board" width="800" height="600"></canvas>
     </div>
     <div class="controls">
@@ -128,6 +119,8 @@
         <input type="color" id="color-picker" value="#000000"/>
         <label for="brush-size">Brush Size:</label>
         <input type="range" id="brush-size" min="1" max="50" value="5"/>
+        <label for="text-size">Text Size:</label>
+        <input type="range" id="text-size" min="12" max="72" value="16"/>
         <button id="save-image">Save as Image</button>
         <label for="tool-select">Tool:</label>
         <select id="tool-select">
@@ -136,6 +129,7 @@
             <option value="rectangle">Rectangle</option>
             <option value="circle">Circle</option>
             <option value="eraser">Eraser</option>
+            <option value="text">Text</option>
         </select>
     </div>
     <script src="canvas.js"></script>
