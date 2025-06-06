@@ -17,7 +17,7 @@ const redoStack = [];
 
 let snapshotBeforeShape = null;
 
-const FILTERS = ["blur", "invert"];
+const FILTERS = ['blur', 'invert', 'grayscale', 'duotone', 'posterize', 'mirror']
 const filterSelect = document.getElementById("filter-select");
 FILTERS.forEach(filter => {
     const option = document.createElement("option");
