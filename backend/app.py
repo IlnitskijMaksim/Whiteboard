@@ -1,16 +1,17 @@
 from fastapi import FastAPI, HTTPException
 from config import ROOM_ID, FILTERS
 from fastapi.middleware.cors import CORSMiddleware
-from filter import apply_filter_cpp
+from backend.filter import apply_filter_cpp
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:8001"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 _store = []
@@ -50,3 +51,4 @@ def clear_draw(room_id: str):
         raise HTTPException(status_code=404, detail="Room not found")
     _store = []
     return {"status": "ok", "message": f"All commands for room {room_id} have been cleared"}
+
